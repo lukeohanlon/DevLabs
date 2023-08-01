@@ -1,15 +1,34 @@
+CURRENT_INSTANCE=$(docker ps -a -q --filter ancestor="$IMAGE_NAME" --format="{{.ID}}")
+# If an instance does exist, stop the instance
+if [ "$CURRENT_INSTANCE" ]
+then
+  docker rm $(docker stop $CURRENT_INSTANCE)
+fi
 
-sudo apt update && sudo apt install nodejs npm
+# Pull down the instance from Docker Hub
+docker pull "$IMAGE_NAME"
 
-sudo npm install -g pm2
+# Check if a Docker container exists with the name "node_app"; if it does, remove the container
+CONTAINER_EXISTS=$(docker ps -a | grep node_app)
+if [ "$CONTAINER_EXISTS" ]
+then
+  docker rm node_app
+fi
 
-pm2 stop example_app
+# Create a container called "node_app" that is available on port 8443 from our Docker image
+docker create -p 8443:8443 --name node_app "$IMAGE_NAME"
 
-cd DevLabs
+# Write the private key to a file
+echo "$PRIVATE_KEY" > privatekey.pem
 
-npm install
+# Write the server key to a file
+echo "$SERVER" > server.crt
 
-echo $PRIVATE_KEY > devServer.pem
-echo $SERVER > server.crt
+# Add the private key to the "node_app" Docker container
+docker cp ./privatekey.pem node_app:/privatekey.pem
 
-pm2 start ./bin/www --name example_app --env production
+# Add the server key to the "node_app" Docker container
+docker cp ./server.crt node_app:/server.crt
+
+# Start the "node_app" container
+docker start node_app
