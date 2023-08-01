@@ -9,4 +9,7 @@ cd DevLabs
 
 npm install
 
+echo $PRIVATE_KEY > devServer.pem
+echo $SERVER > server.crt
+
 pm2 start ./bin/www --name example_app --env production
