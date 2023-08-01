@@ -64,8 +64,8 @@ jobs:
       - run:
           name: run-zap-scan-against-container
           command: >
-          docker run -t owasp/zap2docker-stable zap-baseline.py -t "https://13.51.56.0:8443/math/add" -P 8443
-
+            CONTAINER_IP=$(docker inspect integration_app --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}');
+            docker run -t owasp/zap2docker-stable zap-baseline.py -t "https://$CONTAINER_IP:8443/math/add" -P 8443
 
   deploy:
     docker:
