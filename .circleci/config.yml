@@ -1,6 +1,5 @@
 version: 2.1
 
-
 workflows:
   version: 2
   build:
@@ -10,9 +9,17 @@ workflows:
             branches:
               only:
                 - main
+      - deploy:
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - build
+
 jobs:
   build:
-    working_directory: ~/ExampleApplication
+    working_directory: ~/DevLabs
     docker:
       - image: circleci/node:10.16.3
     steps:
@@ -29,3 +36,10 @@ jobs:
           key: dependency-cache-{{ checksum "package-lock.json"}} 
           paths:
            - ./node_modules
+  deploy:
+    docker:
+      - image: circleci/node:10.16.3
+    steps:
+      - run:
+          name: deploy-application
+          command: ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_PUBLIC_DNS "export SERVER=\"$SERVER\"; export PRIVATE_KEY=\"$PRIVATE_KEY\"; rm -rf DevLabs/; git clone https://github.com/lukeohanlon/DevLabs.git; source DevLabs/deploy.sh"
